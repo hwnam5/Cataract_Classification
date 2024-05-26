@@ -1,0 +1,461 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/hun9008/ML_TeamProject_24SS/blob/main/EDA\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "SKQ4bH7qMGrA"
+      },
+      "source": [
+        "# EDA"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 8,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "23TOba33L4qf",
+        "outputId": "a55bac12-1483-44b3-f200-d6ecde311d95"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Drive already mounted at /content/drive; to attempt to forcibly remount, call drive.mount(\"/content/drive\", force_remount=True).\n"
+          ]
+        }
+      ],
+      "source": [
+        "from google.colab import drive\n",
+        "drive.mount('/content/drive')"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import os\n",
+        "import numpy as np\n",
+        "import pandas as pd\n",
+        "import matplotlib.pyplot as plt\n",
+        "from glob import glob\n",
+        "import seaborn as sns\n",
+        "import pickle\n",
+        "import random\n",
+        "from PIL import Image\n",
+        "import PIL\n",
+        "PIL.Image"
+      ],
+      "metadata": {
+        "id": "zV8BH5zzkMVT",
+        "outputId": "63f122e6-e21b-49dd-815c-a931a81ce00b",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        }
+      },
+      "execution_count": 9,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "<module 'PIL.Image' from '/usr/local/lib/python3.10/dist-packages/PIL/Image.py'>"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 9
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "cd /content/drive/MyDrive/data/"
+      ],
+      "metadata": {
+        "id": "5Q0PbxIlj4Q1",
+        "outputId": "32d2f3ae-faa1-4f26-e61a-8458b9ee762d",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        }
+      },
+      "execution_count": 22,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "/content/drive/.shortcut-targets-by-id/1G6SgIRKCYt5sUkkaCAiAmdP0_hZA-rFs/data\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "ls"
+      ],
+      "metadata": {
+        "id": "0BH8HKilj6aa",
+        "outputId": "ff1ec726-c5ba-46b1-ede6-efb36eac0fe8",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        }
+      },
+      "execution_count": 24,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "\u001b[0m\u001b[01;34mblurr_cut_png\u001b[0m/   \u001b[01;34mgray_cut_jpg\u001b[0m/     \u001b[01;34mimages_gray_jpg\u001b[0m/  \u001b[01;34mimages_png\u001b[0m/  \u001b[01;34mMNIST\u001b[0m/\n",
+            "\u001b[01;34mcut_resize_jpg\u001b[0m/  \u001b[01;34mimages_cut2_png\u001b[0m/  \u001b[01;34mimages_gray_png\u001b[0m/  \u001b[01;34mincipient\u001b[0m/   \u001b[01;34mno\u001b[0m/\n",
+            "\u001b[01;34mcut_resize_png\u001b[0m/  \u001b[01;34mimages_cut_jpg\u001b[0m/   \u001b[01;34mimages_jpg\u001b[0m/       \u001b[01;34mmature\u001b[0m/      \u001b[01;34moverripe\u001b[0m/\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# 데이터 경로 설정\n",
+        "image_path = \"/content/drive/MyDrive/data/cut_resize_jpg\""
+      ],
+      "metadata": {
+        "id": "8szRFX3WpqmU"
+      },
+      "execution_count": 16,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# 라벨별 분포\n"
+      ],
+      "metadata": {
+        "id": "ubFLY0BqkEzu"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# 각 클래스별 디렉토리 경로\n",
+        "class_dirs = ['overripe', 'no', 'mature', 'incipient']\n",
+        "\n",
+        "# 출력할 이미지 개수\n",
+        "num_images = 15\n",
+        "\n",
+        "# 이미지 출력을 위한 서브플롯 생성\n",
+        "fig, axs = plt.subplots(len(class_dirs), num_images, figsize=(20, 10))\n",
+        "\n",
+        "for i, class_dir in enumerate(class_dirs):\n",
+        "    # 클래스 디렉토리 내의 모든 이미지 파일 경로 리스트 생성\n",
+        "    image_files = [os.path.join(image_path, class_dir, filename)\n",
+        "                   for filename in os.listdir(os.path.join(image_path, class_dir))\n",
+        "                   if filename.endswith('.jpg') or filename.endswith('.png')]\n",
+        "\n",
+        "    # 이미지 파일 경로 리스트에서 랜덤하게 15개 선택\n",
+        "    selected_files = random.sample(image_files, num_images)\n",
+        "\n",
+        "    for j, file_path in enumerate(selected_files):\n",
+        "        # 이미지 파일 읽기\n",
+        "        img = Image.open(file_path)\n",
+        "\n",
+        "        # 이미지 출력\n",
+        "        axs[i, j].imshow(img)\n",
+        "        axs[i, j].axis('off')\n",
+        "\n",
+        "        # 첫 번째 이미지에만 클래스 레이블 표시\n",
+        "        if j == 0:\n",
+        "            axs[i, j].set_title(class_dir)\n",
+        "\n",
+        "plt.tight_layout()\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "id": "Ej-LTzqMkEnA"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# 데이터 정보 시각화\n",
+        "\n",
+        "픽셀과 확장자에 대한 정보를 표현"
+      ],
+      "metadata": {
+        "id": "5V2PXAAOjfX_"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# 각 클래스별 디렉토리 경로\n",
+        "class_dirs = ['overripe', 'no', 'mature', 'incipient']\n",
+        "\n",
+        "# 픽셀 수와 확장자를 저장할 딕셔너리\n",
+        "data_info = {}\n",
+        "\n",
+        "# 각 클래스별로 픽셀 수와 확장자 조사\n",
+        "for class_dir in class_dirs:\n",
+        "    os.chdir(os.path.join(image_path, class_dir))\n",
+        "\n",
+        "    with open('zero_centering.pkl', 'rb') as f:\n",
+        "        data = pickle.load(f)\n",
+        "\n",
+        "    total_pixels = 0\n",
+        "    extension_counts = {'PNG': 0, 'JPG': 0}\n",
+        "\n",
+        "    # 클래스 디렉토리 내의 모든 이미지 파일에 대해 반복\n",
+        "    for filename in data:\n",
+        "        _, extension = os.path.splitext(filename)\n",
+        "        extension = extension.upper()\n",
+        "\n",
+        "        if extension in ['.PNG', '.JPG']:\n",
+        "            filepath = os.path.join(image_path, class_dir, filename)\n",
+        "\n",
+        "            # 이미지 파일 읽기\n",
+        "            with Image.open(filepath) as img:\n",
+        "                width, height = img.size\n",
+        "                total_pixels += width * height\n",
+        "\n",
+        "            extension_counts[extension[1:]] += 1\n",
+        "\n",
+        "    data_info[class_dir] = {\n",
+        "        'pixels': total_pixels,\n",
+        "        'extensions': extension_counts\n",
+        "    }\n",
+        "\n",
+        "# 결과 출력\n",
+        "print(\"Class\\t\\tPixels\\t\\tPNG\\t\\tJPG\")\n",
+        "print(\"-----\\t\\t------\\t\\t---\\t\\t---\")\n",
+        "for class_dir, info in data_info.items():\n",
+        "    pixels = info['pixels']\n",
+        "    png_count = info['extensions']['PNG']\n",
+        "    jpg_count = info['extensions']['JPG']\n",
+        "    print(f\"{class_dir}\\t\\t{pixels}\\t\\t{png_count}\\t\\t{jpg_count}\")"
+      ],
+      "metadata": {
+        "id": "X-vDDFkZrZww",
+        "outputId": "e7256bc8-9574-4704-ee87-8195390bea74",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 411
+        }
+      },
+      "execution_count": 21,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "overripe : 2000\n"
+          ]
+        },
+        {
+          "output_type": "error",
+          "ename": "FileNotFoundError",
+          "evalue": "[Errno 2] No such file or directory: '/content/drive/MyDrive/data/cut_resize_jpg/overripe/crop_D0_0d4dc616-60a5-11ec-8402-0a7404972c70.jpg'",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mFileNotFoundError\u001b[0m                         Traceback (most recent call last)",
+            "\u001b[0;32m<ipython-input-21-d5fdb9c5c11b>\u001b[0m in \u001b[0;36m<cell line: 12>\u001b[0;34m()\u001b[0m\n\u001b[1;32m     21\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m     22\u001b[0m             \u001b[0mabs_img_path\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mos\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mpath\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mjoin\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mimage_path\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mcls\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mimg_path\u001b[0m\u001b[0;34m)\u001b[0m  \u001b[0;31m# 절대 경로로 변환\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m---> 23\u001b[0;31m             \u001b[0mimg\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mImage\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mopen\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mabs_img_path\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m     24\u001b[0m             \u001b[0mimg_prop\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;34m'width'\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mappend\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mimg\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mwidth\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m     25\u001b[0m             \u001b[0mimg_prop\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;34m'height'\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mappend\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mimg\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mheight\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/local/lib/python3.10/dist-packages/PIL/Image.py\u001b[0m in \u001b[0;36mopen\u001b[0;34m(fp, mode, formats)\u001b[0m\n\u001b[1;32m   3225\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m   3226\u001b[0m     \u001b[0;32mif\u001b[0m \u001b[0mfilename\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m-> 3227\u001b[0;31m         \u001b[0mfp\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mbuiltins\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mopen\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mfilename\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m\"rb\"\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m   3228\u001b[0m         \u001b[0mexclusive_fp\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0;32mTrue\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m   3229\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;31mFileNotFoundError\u001b[0m: [Errno 2] No such file or directory: '/content/drive/MyDrive/data/cut_resize_jpg/overripe/crop_D0_0d4dc616-60a5-11ec-8402-0a7404972c70.jpg'"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# 픽셀 차이 계산\n",
+        "pixel_diffs = np.zeros((len(class_dirs), len(class_dirs)))\n",
+        "for i in range(len(class_dirs)):\n",
+        "    for j in range(len(class_dirs)):\n",
+        "        if i == j:\n",
+        "            pixel_diffs[i][j] = 0\n",
+        "        else:\n",
+        "            class1 = class_dirs[i]\n",
+        "            class2 = class_dirs[j]\n",
+        "            diff = abs(data_info[class1]['pixels'] - data_info[class2]['pixels'])\n",
+        "            pixel_diffs[i][j] = diff\n"
+      ],
+      "metadata": {
+        "id": "J0_sMtgkfZGm"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# 히트맵 그리기\n",
+        "plt.figure(figsize=(8, 6))\n",
+        "sns.heatmap(pixel_diffs, annot=True, cmap='YlGnBu', fmt='g',\n",
+        "            xticklabels=class_dirs, yticklabels=class_dirs)\n",
+        "plt.title('PixeL')\n",
+        "plt.xlabel('Class')\n",
+        "plt.ylabel('Class')\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "id": "qzjhQXQgrkj5",
+        "outputId": "bc9f0c3b-e408-4423-8212-1b68c1ca4c95",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 149
+        }
+      },
+      "execution_count": 19,
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "AttributeError",
+          "evalue": "'dict' object has no attribute 'nunique'",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mAttributeError\u001b[0m                            Traceback (most recent call last)",
+            "\u001b[0;32m<ipython-input-19-689742dfe77d>\u001b[0m in \u001b[0;36m<cell line: 1>\u001b[0;34m()\u001b[0m\n\u001b[0;32m----> 1\u001b[0;31m \u001b[0moverripe\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mnunique\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m",
+            "\u001b[0;31mAttributeError\u001b[0m: 'dict' object has no attribute 'nunique'"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# 전체적인 색 분포를 시각화\n",
+        "\n",
+        "털 색에 대해 표현하고 싶었지만 배경색과 털의 색을 구분 할 방법이 떠오르지 않음."
+      ],
+      "metadata": {
+        "id": "oVzKP69TjSpB"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# 각 클래스별 디렉토리 경로\n",
+        "class_dirs = ['overripe', 'no', 'mature', 'incipient']\n",
+        "\n",
+        "# 털색 분포를 저장할 딕셔너리\n",
+        "color_distribution = {}\n",
+        "\n",
+        "# 각 클래스별로 전체적인 색 분포 조사\n",
+        "for class_dir in class_dirs:\n",
+        "    os.chdir(os.path.join(image_path, class_dir))\n",
+        "\n",
+        "    with open('zero_centering.pkl', 'rb') as f:\n",
+        "        data = pickle.load(f)\n",
+        "\n",
+        "    color_counts = {'white': 0, 'black': 0, 'brown': 0}  # 예시로 흰색, 검은색, 갈색을 사용\n",
+        "\n",
+        "    # 클래스 디렉토리 내의 모든 이미지 파일에 대해 반복\n",
+        "    for filename in data:\n",
+        "        filepath = os.path.join(image_path, class_dir, filename)\n",
+        "\n",
+        "        # 이미지 파일 읽기\n",
+        "        with Image.open(filepath) as img:\n",
+        "            # 이미지의 색상 정보 추출\n",
+        "            colors = img.getcolors(img.size[0] * img.size[1])\n",
+        "\n",
+        "            # 가장 많이 나타나는 색상 선택\n",
+        "            dominant_color = max(colors, key=lambda x: x[0])[1]\n",
+        "\n",
+        "            # RGB 값을 기준으로 털색 판단 (예시)\n",
+        "            if dominant_color[0] > 200 and dominant_color[1] > 200 and dominant_color[2] > 200:\n",
+        "                color_counts['white'] += 1\n",
+        "            elif dominant_color[0] < 50 and dominant_color[1] < 50 and dominant_color[2] < 50:\n",
+        "                color_counts['black'] += 1\n",
+        "            else:\n",
+        "                color_counts['brown'] += 1\n",
+        "\n",
+        "    color_distribution[class_dir] = color_counts\n",
+        "\n",
+        "# 색 분포 시각화\n",
+        "fig, axs = plt.subplots(2, 2, figsize=(12, 8))\n",
+        "axs = axs.flatten()\n",
+        "\n",
+        "for i, class_dir in enumerate(class_dirs):\n",
+        "    ax = axs[i]\n",
+        "    color_counts = color_distribution[class_dir]\n",
+        "\n",
+        "    colors = list(color_counts.keys())\n",
+        "    counts = list(color_counts.values())\n",
+        "\n",
+        "    ax.bar(colors, counts)\n",
+        "    ax.set_title(f\"Color Distribution - {class_dir}\")\n",
+        "    ax.set_xlabel(\"Color\")\n",
+        "    ax.set_ylabel(\"Count\")\n",
+        "\n",
+        "plt.tight_layout()\n",
+        "ㅇ치에 대한 plt.show()"
+      ],
+      "metadata": {
+        "id": "LES79EBOrmU-",
+        "outputId": "baf593b3-ce3e-471d-9e7b-24683caaef69",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 416
+        }
+      },
+      "execution_count": 15,
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "ValueError",
+          "evalue": "Columns must be same length as key",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mValueError\u001b[0m                                Traceback (most recent call last)",
+            "\u001b[0;32m<ipython-input-15-11cece9e09cd>\u001b[0m in \u001b[0;36m<cell line: 12>\u001b[0;34m()\u001b[0m\n\u001b[1;32m     10\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m     11\u001b[0m \u001b[0mtrain_df\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;34m'quality'\u001b[0m\u001b[0;34m]\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mtrain_df\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;34m'image_path'\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mapply\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;32mlambda\u001b[0m \u001b[0mx\u001b[0m\u001b[0;34m:\u001b[0m \u001b[0mcheck_image_quality\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mx\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m---> 12\u001b[0;31m \u001b[0mtrain_df\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;34m'width'\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m'height'\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m'format'\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m'mode'\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m]\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mpd\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mDataFrame\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mtrain_df\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;34m'quality'\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mtolist\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mindex\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0mtrain_df\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mindex\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m     13\u001b[0m \u001b[0mprint\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m\"Image Quality Info:\"\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m     14\u001b[0m \u001b[0mprint\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mtrain_df\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;34m'width'\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m'height'\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m'format'\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m'mode'\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mdescribe\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/local/lib/python3.10/dist-packages/pandas/core/frame.py\u001b[0m in \u001b[0;36m__setitem__\u001b[0;34m(self, key, value)\u001b[0m\n\u001b[1;32m   3936\u001b[0m             \u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m_setitem_frame\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mkey\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mvalue\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m   3937\u001b[0m         \u001b[0;32melif\u001b[0m \u001b[0misinstance\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mkey\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m(\u001b[0m\u001b[0mSeries\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mnp\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mndarray\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mlist\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mIndex\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m-> 3938\u001b[0;31m             \u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m_setitem_array\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mkey\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mvalue\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m   3939\u001b[0m         \u001b[0;32melif\u001b[0m \u001b[0misinstance\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mvalue\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mDataFrame\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m   3940\u001b[0m             \u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m_set_item_frame_value\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mkey\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mvalue\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/local/lib/python3.10/dist-packages/pandas/core/frame.py\u001b[0m in \u001b[0;36m_setitem_array\u001b[0;34m(self, key, value)\u001b[0m\n\u001b[1;32m   3978\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m   3979\u001b[0m             \u001b[0;32mif\u001b[0m \u001b[0misinstance\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mvalue\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mDataFrame\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m-> 3980\u001b[0;31m                 \u001b[0mcheck_key_length\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mcolumns\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mkey\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mvalue\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m   3981\u001b[0m                 \u001b[0;32mfor\u001b[0m \u001b[0mk1\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mk2\u001b[0m \u001b[0;32min\u001b[0m \u001b[0mzip\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mkey\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mvalue\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mcolumns\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m   3982\u001b[0m                     \u001b[0mself\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0mk1\u001b[0m\u001b[0;34m]\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mvalue\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0mk2\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/local/lib/python3.10/dist-packages/pandas/core/indexers/utils.py\u001b[0m in \u001b[0;36mcheck_key_length\u001b[0;34m(columns, key, value)\u001b[0m\n\u001b[1;32m    390\u001b[0m     \u001b[0;32mif\u001b[0m \u001b[0mcolumns\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mis_unique\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    391\u001b[0m         \u001b[0;32mif\u001b[0m \u001b[0mlen\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mvalue\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mcolumns\u001b[0m\u001b[0;34m)\u001b[0m \u001b[0;34m!=\u001b[0m \u001b[0mlen\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mkey\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 392\u001b[0;31m             \u001b[0;32mraise\u001b[0m \u001b[0mValueError\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m\"Columns must be same length as key\"\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m    393\u001b[0m     \u001b[0;32melse\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    394\u001b[0m         \u001b[0;31m# Missing keys in columns are represented as -1\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;31mValueError\u001b[0m: Columns must be same length as key"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# 이상치에 대한 시각화"
+      ],
+      "metadata": {
+        "id": "xZKVz-PHj9OW"
+      }
+    }
+  ],
+  "metadata": {
+    "colab": {
+      "name": "Colab 구독 최대한 활용하기",
+      "provenance": [],
+      "machine_shape": "hm",
+      "gpuType": "A100",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "display_name": "Python 3",
+      "name": "python3"
+    },
+    "accelerator": "GPU"
+  },
+  "nbformat": 4,
+  "nbformat_minor": 0
+}
